@@ -1,0 +1,16 @@
+    using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class InventorySlot : MonoBehaviour
+{
+    public Image itemImage;
+    public Text itemTxt;
+
+    public void ItemSetting(Color color, string txt)
+    {
+        itemImage.color = color;
+        itemTxt.text = txt;
+    }
+}

@@ -65,30 +65,49 @@ public class CreateMap : MonoBehaviour
 
     void PlaceGold(int x, int y, int z)
     {
-        Debug.Log("½ºÆùµÊ");
         var go = Instantiate(goldBlock, new Vector3(x, y, z), Quaternion.identity, transform);
         go.name = $"Gold_{x}_{y}_{z}";
-        blocks.Add(go);
+
+        var b = go.GetComponent<Block>() ?? go.AddComponent<Block>();
+        b.type = BlockType.Gold;
+        b.maxHP = 3;
+        b.dropCount = 1;
+        b.mineable = true;
     }
 
     void PlaceStone(int x, int y, int z)
     {
         var go = Instantiate(dirtBlock, new Vector3(x, y, z), Quaternion.identity, transform);
         go.name = $"S_{x}_{y}_{z}";
-        blocks.Add(go);
+
+        var b = go.GetComponent<Block>() ?? go.AddComponent<Block>();
+        b.type = BlockType.Stone;
+        b.maxHP = 3;
+        b.dropCount = 1;
+        b.mineable = true;
     }
 
     void PlaceGrass(int x, int y, int z)
     {
         var go = Instantiate(grassBlock, new Vector3(x, y, z), Quaternion.identity, transform);
         go.name = $"G_{x}_{y}_{z}";
-        blocks.Add(go);
+
+        var b = go.GetComponent<Block>() ?? go.AddComponent<Block>();   
+        b.type = BlockType.Grass;
+        b.maxHP = 3;
+        b.dropCount = 1;
+        b.mineable = true;
     }
     void PlaceWater(int x, int y, int z)
     {
         var go = Instantiate(waterBlock, new Vector3(x, y, z), Quaternion.identity, transform);
         go.name = $"W_{x}_{y}_{z}";
-        blocks.Add(go);
+
+        var b = go.GetComponent<Block>() ?? go.AddComponent<Block>();
+        b.type = BlockType.Water;
+        b.maxHP = 3;
+        b.dropCount = 1;
+        b.mineable = true;
     }
 
 }
