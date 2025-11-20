@@ -1,62 +1,114 @@
-﻿using Unity.VisualScripting.Antlr3.Runtime.Misc;
+﻿using System.Collections.Generic;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEditor.Search;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class InventoryManager : MonoBehaviour
 {
-    public GameObject[] slots;
-    public GameObject inventorySlotPrefab;
+    #region //각 타입 별 스프라이트
+    public Sprite dirtSprite;
+    public Sprite grassSprite;
+    public Sprite stoneSprite;
+    public Sprite waterSprite;
+    public Sprite goldSprite;
+    #endregion
+
+    public List<Transform> Slot = new List<Transform>(); // UI 내의 각 슬롯들의 리스트
+    public GameObject SlotItem; // 슬롯 내에 들어가는 아이템
+    List<GameObject> items = new List<GameObject>(); // 아이템 삭제용 리스트
+
     public static InventoryManager instance;
 
-    private void Start()
+    public int selectedIndex = -1;
+
+    private void Update()
     {
-        instance = this;
+        for (int i = 0; i < Mathf.Min(9, Slot.Count); i++)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+            {
+                SetSelectedIndex(i);
+            }
+        }
     }
 
-    public void UpdateUI(BlockType type, int count)
+    public void SetSelectedIndex(int idx)
     {
-        for (int i = 0; i < slots.Length; i++)
+        ResetSelection();
+        if (selectedIndex == idx)
         {
-            if (slots[i].transform.childCount > 0)
+            selectedIndex = -1; // 같은 인덱스 선택 시 선택 해제
+        }
+        else
+        {
+            if (idx >= items.Count)
             {
-                InventorySlot slotScript = slots[i].GetComponentInChildren<InventorySlot>();
-                if (slotScript.itemTxt.text.StartsWith(type.ToString()))
-                {
-                    // 같은 블록 발견 → 수량만 증가시킴
-                    string[] parts = slotScript.itemTxt.text.Split('x');
-                    int currentCount = 1;
-                    if (parts.Length > 1)
-                        int.TryParse(parts[1].Trim(), out currentCount);
-
-                    currentCount += count;
-                    slotScript.ItemSetting(slotScript.itemImage.color, $"{type} x{currentCount}");
-                    Debug.Log($"{type} 수량 업데이트: {currentCount}");
-                    return;
-                }
+                selectedIndex = -1; // 아이템이 없는 슬롯 선택 시 선택 해제
+            }
+            else
+            {
+                SetSelection(idx);
+                selectedIndex = idx;
             }
         }
-        for (int i = 0; i < slots.Length; i++)
+    }
+
+    public void ResetSelection()
+    {
+        foreach (var slot in Slot)
         {
-            if (slots[i].transform.childCount == 0)
-            {
-                GameObject newSlot = Instantiate(inventorySlotPrefab, slots[i].transform);
-                InventorySlot slotScript = newSlot.GetComponent<InventorySlot>();
-
-                Color color = Color.white;
-                switch (type)
-                {
-                    case BlockType.Grass: color = Color.green; break;
-                    case BlockType.Stone: color = Color.gray; break;
-                    case BlockType.Water: color = Color.blue; break;
-                    case BlockType.Gold: color = Color.yellow; break;
-                }
-
-                slotScript.ItemSetting(color, $"{type} x{count}");
-                Debug.Log($"새 슬롯 생성: {type} x{count}");
-                return;
-            }
+            slot.GetComponent<Image>().color = Color.white;
         }
+    }
 
-        Debug.LogWarning("빈 슬롯이 없습니다!");
+    void SetSelection(int _idx)
+    {
+        Slot[_idx].GetComponent<Image>().color = Color.yellow;
+    }
+
+    public BlockType GetInventorySlot()
+    {
+        return items[selectedIndex].GetComponent<InventorySlot>().blockType;
+    }
+    public void UpdateInventory(Inventory myInven)
+    {
+        // 1. 기존 슬롯 초기화
+        foreach (var slotItems in items)
+        {
+            Destroy(slotItems); // 사라지게 하고 아이템들의 GameObject 삭제
+        }
+        items.Clear(); // 시작위치에 리스트 클리어
+
+        // 2. 인벤토리 아이템을 UI에 추가
+        int idx = 0; // 리스트 인덱스 값
+        foreach (var item in myInven.items)
+        {
+            #region 슬롯아이템 생성 과정 (게임오브젝트 인스턴스 생성, 위치 조정, SlotItemPrefab 컴포넌트 가져오기, 그 후 아이템 세팅)
+            GameObject go = Instantiate(SlotItem, Slot[idx].transform);
+            go.transform.localPosition = Vector3.zero;
+            InventorySlot slotItemPrefab = go.GetComponent<InventorySlot>();
+            items.Add(go); // 아이템 리스트에 박아 넣기
+            #endregion
+
+            switch (item.Key) // 각 키에 스프라이트 아이템 추가
+            {
+                case BlockType.Grass:
+                    slotItemPrefab.ItemSetting(grassSprite, "x" + item.Value.ToString(), item.Key);
+                    break;
+                case BlockType.Stone:
+                    slotItemPrefab.ItemSetting(stoneSprite, "x" + item.Value.ToString(), item.Key);
+                    break;
+                case BlockType.Water:
+                    slotItemPrefab.ItemSetting(waterSprite, "x" + item.Value.ToString(), item.Key);
+                    break;
+                case BlockType.Gold:
+                    slotItemPrefab.ItemSetting(goldSprite, "x" + item.Value.ToString(), item.Key);
+                    break;
+            }
+
+            idx++; // 인덱스 값 증가
+        }
     }
 }

@@ -7,10 +7,12 @@ public class InventorySlot : MonoBehaviour
 {
     public Image itemImage;
     public Text itemTxt;
+    public BlockType blockType;
 
-    public void ItemSetting(Color color, string txt)
+    public void ItemSetting(Sprite color, string txt,BlockType type)
     {
-        itemImage.color = color;
+        itemImage.sprite = color;
         itemTxt.text = txt;
+        blockType = type;
     }
 }

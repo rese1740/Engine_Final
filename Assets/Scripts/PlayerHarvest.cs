@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerHarvest : MonoBehaviour
 {
@@ -12,36 +10,83 @@ public class PlayerHarvest : MonoBehaviour
     private Camera _cam;
     public Inventory inventory;
 
+    public GameObject selectedBlock;
+
     Transform playerTransform;
     public float interactionRange = 2.0f;
     public LayerMask interactionMask = 1;
+    InventoryManager inven;
     private void Awake()
     {
         playerTransform = transform;
         _cam = Camera.main;
         if (inventory == null) inventory = gameObject.AddComponent<Inventory>();
+
+        inven = FindObjectOfType<InventoryManager>();
     }
 
     private void Update()
     {
         CheckForInteractables();
-        if (Input.GetMouseButton(0) && Time.time >= _nextHitTime)
-        {
-            _nextHitTime = Time.time + hitCooldown;
 
-            Ray ray = _cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-            if (Physics.Raycast(ray, out var hit, rayDistance, hitMask))
+        if (inven.selectedIndex < 0)
+        {
+            selectedBlock.transform.localScale = Vector3.zero;
+            if (Input.GetMouseButton(0) && Time.time >= _nextHitTime)
             {
-                var block = hit.collider.GetComponent<Block>();
-                if (block != null)
-                    block.Hit(toolDamage, inventory);
+                _nextHitTime = Time.time + hitCooldown;
+
+                Ray ray = _cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+                if (Physics.Raycast(ray, out var hit, rayDistance, hitMask))
+                {
+                    var block = hit.collider.GetComponent<Block>();
+                    if (block != null)
+                        block.Hit(toolDamage, inventory);
+                }
             }
         }
+        else
+        {
+            Ray rayDebug = _cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+            if (Physics.Raycast(rayDebug, out var hitDebug, rayDistance, hitMask, QueryTriggerInteraction.Ignore))
+            {
+                Vector3Int placePos = CellHitFace(hitDebug);
+                selectedBlock.transform.localScale = Vector3.one;
+                selectedBlock.transform.position = placePos;
+                selectedBlock.transform.rotation = Quaternion.identity;
+            }
+            else
+            {
+                selectedBlock.transform.localScale = Vector3.zero;
+            }
+            if (Input.GetMouseButtonDown(0))
+            {
+                Ray ray = _cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+                if (Physics.Raycast(ray, out var hit, rayDistance, hitMask, QueryTriggerInteraction.Ignore))
+                {
+                    Vector3Int placePos = CellHitFace(hit);
+
+                    BlockType selected = inven.GetInventorySlot();
+                    if (inventory.Consume(selected, 1))
+                    {
+                        FindObjectOfType<NoiseVoxelMap>().PlaceTile(placePos, selected);
+                    }
+                }
+            }
+        }
+        
+
+    }
+
+    static Vector3Int CellHitFace(in RaycastHit hit)
+    {
+        Vector3 baseCenter = hit.collider.transform.position;
+        Vector3 adjCenter = baseCenter + hit.normal;
+        return Vector3Int.RoundToInt(adjCenter);
     }
 
     void CheckForInteractables()
     {
-        // 플레이어 중심에서 구형 범위로 탐색
         Collider[] hitColliders = Physics.OverlapSphere(playerTransform.position, interactionRange, interactionMask);
 
         Block closestInteractable = null;

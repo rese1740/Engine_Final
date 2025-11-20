@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         cc = GetComponent<CharacterController>();
+        LockCusor();
 
         if (cam != null)
             cam = GetComponentInChildren<Camera>()?.transform;
@@ -29,6 +30,12 @@ public class PlayerController : MonoBehaviour
     {
         HandleLook();
         HandleMove();
+    }
+
+    void LockCusor()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void HandleMove()

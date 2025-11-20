@@ -45,14 +45,15 @@ public class Block : MonoBehaviour
                 inven.Add(type, dropCount);
             }
 
-            Die();
+            Die(inven);
         }
     }
 
-    void Die()
+    void Die(Inventory inventory)
     {
         gameObject.AddComponent<Rigidbody>();
         transform.localScale *= 0.5f;
+        mineable = false;
         isDie = true;
     }
 
@@ -61,7 +62,6 @@ public class Block : MonoBehaviour
         if (!isDie)
             return;
 
-        InventoryManager.instance.UpdateUI(type, dropCount);
         Destroy(gameObject);
     }
 
